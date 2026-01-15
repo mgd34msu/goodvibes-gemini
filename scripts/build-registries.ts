@@ -118,50 +118,7 @@ function buildCategoryTree(entries: RegistryEntry[]): Record<string, any> {
 }
 
 /**
- * Scan agents directory
- */
-function scanAgents(): RegistryEntry[] {
-  const agentsDir = path.join(PLUGIN_ROOT, 'agents');
-  const entries: RegistryEntry[] = [];
-
-  function scanDir(dir: string, relativePath: string = '') {
-    if (!fs.existsSync(dir)) return;
-
-    const items = fs.readdirSync(dir);
-    for (const item of items) {
-      if (item.startsWith('_')) continue; // Skip registry files
-
-      const fullPath = path.join(dir, item);
-      const stat = fs.statSync(fullPath);
-
-      if (stat.isDirectory()) {
-        scanDir(fullPath, relativePath ? `${relativePath}/${item}` : item);
-      } else if (item.endsWith('.md')) {
-        const content = fs.readFileSync(fullPath, 'utf-8');
-        const frontmatter = extractFrontmatter(content);
-
-        if (frontmatter) {
-          const name = frontmatter.name || item.replace('.md', '');
-          const description = frontmatter.description || '';
-
-          entries.push({
-            name,
-            path: relativePath ? `${relativePath}/${item.replace('.md', '')}` : item.replace('.md', ''),
-            description,
-            triggers: extractKeywords(description, name),
-            category: relativePath.split('/')[0] || 'general'
-          });
-        }
-      }
-    }
-  }
-
-  scanDir(agentsDir);
-  return entries;
-}
-
-/**
- * Scan skills directory
+ * Scan skills directory and flatten for CLI discovery
  */
 function scanSkills(): RegistryEntry[] {
   const skillsDir = path.join(PLUGIN_ROOT, 'skills');
@@ -181,16 +138,33 @@ function scanSkills(): RegistryEntry[] {
       if (frontmatter) {
         const name = frontmatter.name || path.basename(dir);
         const description = frontmatter.description || '';
+        
+        // Flatten: if it's nested (e.g. webdev/ai/vercel), move it to skills/vercel
+        const flattenedPath = path.join(PLUGIN_ROOT, 'skills', name);
+        if (dir !== flattenedPath) {
+          if (!fs.existsSync(flattenedPath)) {
+            fs.mkdirSync(flattenedPath, { recursive: true });
+          }
+          // Copy SKILL.md to the flattened location
+          fs.writeFileSync(path.join(flattenedPath, 'SKILL.md'), content);
+          
+          // Copy any other .md files in the skill directory
+          for (const item of items) {
+             if (item.endsWith('.md') && item !== 'SKILL.md') {
+                fs.copyFileSync(path.join(dir, item), path.join(flattenedPath, item));
+             }
+          }
+        }
 
         entries.push({
           name,
-          path: relativePath,
+          path: name,
           description,
           triggers: extractKeywords(description, name),
           category: relativePath.split('/')[0] || 'general'
         });
       }
-      return; // Don't recurse into skill subdirectories
+      return; 
     }
 
     // Recurse into subdirectories
@@ -207,6 +181,55 @@ function scanSkills(): RegistryEntry[] {
   }
 
   scanDir(skillsDir);
+  return entries;
+}
+
+/**
+ * Scan agents directory and flatten for CLI discovery
+ */
+function scanAgents(): RegistryEntry[] {
+  const agentsDir = path.join(PLUGIN_ROOT, 'agents');
+  const entries: RegistryEntry[] = [];
+
+  function scanDir(dir: string, relativePath: string = '') {
+    if (!fs.existsSync(dir)) return;
+
+    const items = fs.readdirSync(dir);
+    for (const item of items) {
+      if (item.startsWith('_') || item.startsWith('.')) continue;
+
+      const fullPath = path.join(dir, item);
+      const stat = fs.statSync(fullPath);
+
+      if (stat.isDirectory()) {
+        scanDir(fullPath, relativePath ? `${relativePath}/${item}` : item);
+      } else if (item.endsWith('.md')) {
+        const content = fs.readFileSync(fullPath, 'utf-8');
+        const frontmatter = extractFrontmatter(content);
+
+        if (frontmatter) {
+          const name = frontmatter.name || item.replace('.md', '');
+          const description = frontmatter.description || '';
+          
+          // Flatten: move agent file to the top-level agents directory
+          const flattenedPath = path.join(PLUGIN_ROOT, 'agents', item);
+          if (fullPath !== flattenedPath) {
+            fs.writeFileSync(flattenedPath, content);
+          }
+
+          entries.push({
+            name,
+            path: item.replace('.md', ''),
+            description,
+            triggers: extractKeywords(description, name),
+            category: relativePath.split('/')[0] || 'general'
+          });
+        }
+      }
+    }
+  }
+
+  scanDir(agentsDir);
   return entries;
 }
 

@@ -157,13 +157,17 @@ function main() {
   // 1. Build
   runBuild();
 
-  // 2. Determine where to install
-  // We prioritize settings.json as the standard for MCP servers in Gemini.
-  
-  updateConfigFile(MCP_CONFIG_PATH);
+  // 2. Link using the CLI's native command
+  log('Linking extension to Gemini CLI...');
+  try {
+    // We use '.' because the script is run from the root
+    execSync('gemini extensions link .', { stdio: 'inherit', cwd: CWD });
+  } catch (e) {
+    error('Failed to link extension. Ensure the Gemini CLI is installed and in your PATH.');
+  }
 
   log('Installation Complete! ✅');
-  log('You can now use GoodVibes tools in your Gemini CLI.');
+  log('You can now use GoodVibes tools and agents in your Gemini CLI.');
   log(`Extension Root: ${CWD}`);
 }
 
