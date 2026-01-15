@@ -7,9 +7,12 @@ GEMINI.md
 node_modules/
 
 # Build outputs
-dist/
-out/
-build/
+# dist/
+# out/
+# build/
+!tools/implementations/tool-search-server/dist/
+!hooks/scripts/dist/
+!**/_registry.yaml
 
 # Testing
 coverage/

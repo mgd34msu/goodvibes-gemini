@@ -1,5 +1,6 @@
 # Build output
-dist/
+# dist/
+!dist/
 
 # Test coverage output
 coverage/
