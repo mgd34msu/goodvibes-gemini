@@ -173,6 +173,10 @@ function main() {
     error('Failed to link extension. Ensure the Gemini CLI is installed and in your PATH.');
   }
 
+  // 3. Update global settings.json
+  log('Updating global Gemini settings.json...');
+  updateConfigFile(MCP_CONFIG_PATH);
+
   log('Installation Complete! ✅');
   log('You can now use GoodVibes tools and agents in your Gemini CLI.');
   log(`Extension Root: ${CWD}`);

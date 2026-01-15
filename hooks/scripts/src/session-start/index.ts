@@ -19,6 +19,7 @@ import {
   readHookInput,
   validateRegistries,
   ensureCacheDir,
+  ensureGoodVibesDir,
   isTestEnvironment,
   saveAnalytics,
   debug,
@@ -179,6 +180,10 @@ async function runSessionStartHook(): Promise<void> {
     // Determine project directory
     const projectDir = input.cwd || PROJECT_ROOT;
     debug(`Project directory: ${projectDir}`);
+
+    // Ensure .goodvibes directory exists
+    await ensureGoodVibesDir(projectDir);
+    debug('.goodvibes directory ensured');
 
     // Step 1: Load or initialize state
     let state = await loadPluginState(projectDir);

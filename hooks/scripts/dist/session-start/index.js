@@ -13,7 +13,7 @@
  * - Saves state for future sessions
  */
 // Session-start specific modules
-import { respond, readHookInput, validateRegistries, ensureCacheDir, isTestEnvironment, saveAnalytics, debug, logError, createResponse, PROJECT_ROOT, } from '../shared/index.js';
+import { respond, readHookInput, validateRegistries, ensureCacheDir, ensureGoodVibesDir, isTestEnvironment, saveAnalytics, debug, logError, createResponse, PROJECT_ROOT, } from '../shared/index.js';
 import { loadState, saveState, updateSessionState, initializeSession, } from '../state/index.js';
 import { createDefaultState } from '../types/state.js';
 import { gatherProjectContext, createFailedContextResult, } from './context-builder.js';
@@ -136,6 +136,9 @@ async function runSessionStartHook() {
         // Determine project directory
         const projectDir = input.cwd || PROJECT_ROOT;
         debug(`Project directory: ${projectDir}`);
+        // Ensure .goodvibes directory exists
+        await ensureGoodVibesDir(projectDir);
+        debug('.goodvibes directory ensured');
         // Step 1: Load or initialize state
         let state = await loadPluginState(projectDir);
         // Initialize session ID

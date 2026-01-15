@@ -4774,6 +4774,8 @@ async function runSessionStartHook() {
     });
     const projectDir = input.cwd || PROJECT_ROOT;
     debug(`Project directory: ${projectDir}`);
+    await ensureGoodVibesDir(projectDir);
+    debug(".goodvibes directory ensured");
     let state = await loadPluginState(projectDir);
     const sessionId = input.session_id || `session_${Date.now()}`;
     state = initializeSession(state, sessionId);

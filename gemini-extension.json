@@ -2,6 +2,7 @@
   "name": "goodvibes",
   "version": "1.0.0",
   "description": "GoodVibes extension for Gemini CLI - Full-stack development suite",
+  "contextFileName": "GEMINI.md",
   "mcpServers": {
     "goodvibes-tools": {
       "command": "node",
