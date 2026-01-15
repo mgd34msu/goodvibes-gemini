@@ -160,6 +160,13 @@ function main() {
   // 2. Link using the CLI's native command
   log('Linking extension to Gemini CLI...');
   try {
+    // Attempt to uninstall first to ensure we can link cleanly (idempotency)
+    try {
+      execSync('gemini extensions uninstall goodvibes', { stdio: 'ignore', cwd: CWD });
+    } catch (e) {
+      // Ignore errors from uninstall if it wasn't already installed
+    }
+    
     // We use '.' because the script is run from the root
     execSync('gemini extensions link .', { stdio: 'inherit', cwd: CWD });
   } catch (e) {
