@@ -1,0 +1,24 @@
+{
+  "name": "gemini-goodvibes",
+  "version": "1.0.0",
+  "description": "GoodVibes extension for Gemini CLI - Full-stack development suite",
+  "keywords": ["gemini-extension", "fullstack", "development", "mcp", "agents"],
+  "type": "module",
+  "scripts": {
+    "build": "npm run build:registries && npm run build:server && npm run build:hooks",
+    "build:registries": "npx tsx scripts/build-registries.ts",
+    "build:server": "cd tools/implementations/tool-search-server && npm install && npm run build",
+    "build:hooks": "cd hooks/scripts && npm install && npm run build",
+    "migrate": "npx tsx scripts/migrate-content.ts",
+    "validate": "npx tsx scripts/validate.ts",
+    "setup": "npx tsx scripts/install.ts",
+    "postinstall": "npm run build"
+  },
+  "devDependencies": {
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "js-yaml": "^4.1.1",
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^25.0.3"
+  }
+}

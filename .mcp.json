@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "goodvibes-tools": {
+      "command": "node",
+      "args": ["./tools/implementations/tool-search-server/dist/index.cjs"],
+      "env": {
+        "PLUGIN_ROOT": ".",
+        "NODE_ENV": "production"
+      }
+    }
+  }
+}
