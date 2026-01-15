@@ -15,8 +15,7 @@ import { execSync } from 'child_process';
 const CWD = process.cwd();
 const HOME_DIR = os.homedir();
 const GEMINI_CONFIG_DIR = path.join(HOME_DIR, '.gemini');
-const MCP_CONFIG_PATH = path.join(GEMINI_CONFIG_DIR, 'mcp.json'); // Standard MCP config location
-const GEMINI_CONFIG_PATH = path.join(GEMINI_CONFIG_DIR, 'config.json'); // Fallback/Main config
+const MCP_CONFIG_PATH = path.join(GEMINI_CONFIG_DIR, 'settings.json'); // Target settings.json
 
 // Configuration for this specific extension
 const EXTENSION_NAME = 'goodvibes-tools';
@@ -51,8 +50,52 @@ function getMcpConfig() {
   };
 }
 
+function getHooksConfig() {
+  const distDir = path.join(CWD, 'hooks', 'scripts', 'dist');
+  
+  const createHook = (scriptName: string, timeout: number = 5) => ([
+    {
+      matcher: '*',
+      hooks: [
+        {
+          type: 'command',
+          command: `node "${path.join(distDir, scriptName)}"`,
+          timeout
+        }
+      ]
+    }
+  ]);
+
+  return {
+    SessionStart: [
+      {
+        matcher: 'startup',
+        hooks: [{ type: 'command', command: `node "${path.join(distDir, 'session-start.js')}"`, timeout: 10 }]
+      },
+      {
+        matcher: 'resume',
+        hooks: [{ type: 'command', command: `node "${path.join(distDir, 'session-start.js')}"`, timeout: 10 }]
+      }
+    ],
+    PreToolUse: createHook('pre-tool-use.js'),
+    PostToolUseFailure: createHook('post-tool-use-failure.js'),
+    PostToolUse: createHook('post-tool-use.js'),
+    PermissionRequest: createHook('permission-request.js'),
+    UserPromptSubmit: createHook('user-prompt-submit.js'),
+    Stop: createHook('stop.js', 10),
+    SubagentStart: createHook('subagent-start.js', 10),
+    SubagentStop: createHook('subagent-stop.js', 10),
+    PreCompact: [
+      { matcher: 'auto', hooks: [{ type: 'command', command: `node "${path.join(distDir, 'pre-compact.js')}"`, timeout: 5 }] },
+      { matcher: 'manual', hooks: [{ type: 'command', command: `node "${path.join(distDir, 'pre-compact.js')}"`, timeout: 5 }] }
+    ],
+    SessionEnd: createHook('session-end.js', 10),
+    Notification: createHook('notification.js')
+  };
+}
+
 function updateConfigFile(configPath: string) {
-  let config: any = { mcpServers: {} };
+  let config: any = { mcpServers: {}, hooks: {} };
   
   if (fs.existsSync(configPath)) {
     try {
@@ -71,9 +114,37 @@ function updateConfigFile(configPath: string) {
   if (!config.mcpServers) {
     config.mcpServers = {};
   }
+  
+  // Ensure hooks object exists
+  if (!config.hooks) {
+    config.hooks = {};
+  }
 
   // Add/Update our server
   config.mcpServers[EXTENSION_NAME] = getMcpConfig();
+  
+  // Merge hooks
+  const gvHooks = getHooksConfig();
+  for (const [hookName, matchers] of Object.entries(gvHooks)) {
+    if (!config.hooks[hookName]) {
+      config.hooks[hookName] = matchers;
+    } else {
+      // For matchers, we prepended ours to ensure they run first
+      const existing = config.hooks[hookName];
+      const gvMatchers = matchers as any[];
+      
+      for (const gvMatcher of gvMatchers) {
+        const alreadyExists = existing.some((m: any) => 
+          m.matcher === gvMatcher.matcher && 
+          m.hooks.some((h: any) => h.command === gvMatcher.hooks[0].command)
+        );
+        
+        if (!alreadyExists) {
+          config.hooks[hookName].unshift(gvMatcher);
+        }
+      }
+    }
+  }
 
   // Write back
   fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
@@ -87,9 +158,7 @@ function main() {
   runBuild();
 
   // 2. Determine where to install
-  // We prioritize mcp.json if it exists or if we're creating fresh, 
-  // but if config.json exists and has mcpServers, we might want to respect that.
-  // For now, we'll try to update mcp.json as the standard for MCP servers.
+  // We prioritize settings.json as the standard for MCP servers in Gemini.
   
   updateConfigFile(MCP_CONFIG_PATH);
 

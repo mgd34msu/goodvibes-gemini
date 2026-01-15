@@ -20,10 +20,19 @@ Gemini GoodVibes transforms your Gemini CLI into an expert development assistant
 
 To install this extension in Gemini CLI:
 
-```bash
-gemini extensions install .
-```
-*(Run this command from the root directory of this project)*
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/mgd34msu/goodvibes-gemini
+   cd goodvibes-gemini
+   ```
+
+2. Run the automatic setup:
+   ```bash
+   npm install
+   npm run setup
+   ```
+
+This will build the extension and register the MCP tools in your global Gemini configuration.
 
 ## Core Components
 

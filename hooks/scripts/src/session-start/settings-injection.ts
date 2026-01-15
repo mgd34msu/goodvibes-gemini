@@ -11,7 +11,7 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
-import { fileExists } from '../shared/file-utils.js';
+import { fileExists, PLUGIN_ROOT } from '../shared/index.js';
 import { debug, logError } from '../shared/logging.js';
 
 /** Structure for a single hook entry */
@@ -60,10 +60,7 @@ export interface SettingsInjectionResult {
  * @returns The absolute path to the plugin root directory
  */
 export function getPluginRoot(): string {
-  // In production: __dirname is {pluginRoot}/hooks/scripts/dist
-  // Go up 3 levels: dist -> scripts -> hooks -> pluginRoot
-  const scriptDir = __dirname || process.cwd();
-  return path.resolve(scriptDir, '..', '..', '..');
+  return PLUGIN_ROOT;
 }
 
 /**
